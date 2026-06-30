@@ -9,14 +9,13 @@ name: connector-bump
 # fire a repository_dispatch at this repo after publishing the connector — that needs a
 # PAT with contents:write here. The daily schedule is the tokenless fallback.
 on:
-  # Daily auto-bump is DISABLED. It previously auto-shipped sha256:51671a99 — a
-  # :latest that segfaulted in production. Two gates now exist (cosign verify + the
-  # smoke test below), and build-images.yml only promotes :latest after its OWN smoke
-  # test — so re-enabling is safe. Uncomment the schedule once you've seen a green
-  # connector build and want to resume auto-bumps (note: each bump still needs a
-  # manual sync of airlock main.yml + apps/deploy to the new digest).
-  # schedule:
-  #   - cron: "17 6 * * *"
+  # Daily auto-bump. Gated against the v1.0.3 segfault-ship class: build-images.yml
+  # promotes :latest only after its own smoke test, and this workflow re-verifies
+  # (cosign + smoke) before releasing. NOTE: a bump updates only the add-on — after
+  # one, manually sync airlock main.yml + apps/deploy (connector digest) and
+  # airlock_connector_version (the new build's git sha) so the dashboard stays right.
+  schedule:
+    - cron: "17 6 * * *"
   workflow_dispatch: {}
 
 permissions:
