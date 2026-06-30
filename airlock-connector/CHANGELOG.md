@@ -4,9 +4,9 @@
 
 - Switch the AppArmor profile from complain to **enforce**: it now actively
   confines the connector + frpc (deny mount/ptrace/raw caps; writes limited to
-  `/data`). If the add-on won't start, check `journalctl -k | grep apparmor` for
-  the denied path and add a rule — or re-add `complain` to both profiles while
-  iterating.
+  `/data`). If the add-on won't start, read the Host log (Settings → System → Logs
+  → Source: Host, or `ha host logs`) for `apparmor="DENIED"` and add a rule — or
+  re-add `complain` to both profiles while iterating.
 
 ## 1.0.8
 

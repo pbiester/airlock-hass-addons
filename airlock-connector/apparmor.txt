@@ -7,8 +7,10 @@
 # equal the add-on slug (airlock_connector) so the Supervisor loads it.
 #
 # ENFORCE mode. If the add-on fails to start after an update, AppArmor is likely
-# blocking a path this profile didn't anticipate: check `journalctl -k | grep
-# apparmor` for the denied operation and add an allow rule — or temporarily add
+# blocking a path this profile didn't anticipate. On Home Assistant OS, read the
+# HOST log for the denial — Settings -> System -> Logs -> Source: Host (or
+# `ha host logs`) — looking for apparmor="DENIED" profile="airlock_connector" and
+# the blocked operation/name. Add an allow rule for it, or temporarily add
 # `complain` back to BOTH profile flags below (loads but enforces nothing) while
 # iterating, then remove it again.
 profile airlock_connector flags=(attach_disconnected,mediate_deleted) {
