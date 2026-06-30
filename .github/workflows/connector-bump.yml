@@ -9,10 +9,12 @@ name: connector-bump
 # fire a repository_dispatch at this repo after publishing the connector — that needs a
 # PAT with contents:write here. The daily schedule is the tokenless fallback.
 on:
-  # Daily auto-bump DISABLED: an auto-pinned :latest (sha256:51671a99) shipped a
-  # connector that segfaulted in production. Re-enable only once this workflow
-  # smoke-tests the resolved image (actually runs it) before repinning — cosign
-  # verifies provenance, not that the binary works. Manual bumps still available.
+  # Daily auto-bump is DISABLED. It previously auto-shipped sha256:51671a99 — a
+  # :latest that segfaulted in production. Two gates now exist (cosign verify + the
+  # smoke test below), and build-images.yml only promotes :latest after its OWN smoke
+  # test — so re-enabling is safe. Uncomment the schedule once you've seen a green
+  # connector build and want to resume auto-bumps (note: each bump still needs a
+  # manual sync of airlock main.yml + apps/deploy to the new digest).
   # schedule:
   #   - cron: "17 6 * * *"
   workflow_dispatch: {}
@@ -29,6 +31,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3   # run the arm64 image variant under emulation
 
       - name: Resolve latest connector digest
         id: resolve
@@ -63,6 +66,23 @@ jobs:
             --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
             "ghcr.io/pbiester/airlock-connector@${DIGEST}" > /dev/null
           echo "Signature verified for ${DIGEST}"
+
+      - name: Smoke test the connector image (no crash on startup)
+        env:
+          REF: ghcr.io/pbiester/airlock-connector@${{ steps.resolve.outputs.digest }}
+        run: |
+          set -euo pipefail
+          is_crash() { case "$1" in 132|133|134|135|136|137|139) return 0 ;; *) return 1 ;; esac; }
+          for plat in linux/amd64 linux/arm64; do
+            # frpc is the binary that segfaulted in prod; --version must exit 0 (set -e
+            # fails the bump on a segfault/panic, so a bad image is never released).
+            docker run --rm --platform "$plat" --entrypoint /usr/local/bin/frpc "$REF" --version
+            # The connector itself must start without a signal-crash (no config => it
+            # errors/waits, both fine).
+            rc=0; timeout 8 docker run --rm --platform "$plat" "$REF" >/dev/null 2>&1 || rc=$?
+            if is_crash "$rc"; then echo "::error::connector crashed on ${plat} (exit ${rc})"; exit 1; fi
+            echo "${plat}: ok (exit ${rc})"
+          done
 
       - name: Repin + release if the digest changed
         env:
