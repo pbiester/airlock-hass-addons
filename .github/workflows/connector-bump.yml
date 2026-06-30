@@ -9,8 +9,12 @@ name: connector-bump
 # fire a repository_dispatch at this repo after publishing the connector — that needs a
 # PAT with contents:write here. The daily schedule is the tokenless fallback.
 on:
-  schedule:
-    - cron: "17 6 * * *"
+  # Daily auto-bump DISABLED: an auto-pinned :latest (sha256:51671a99) shipped a
+  # connector that segfaulted in production. Re-enable only once this workflow
+  # smoke-tests the resolved image (actually runs it) before repinning — cosign
+  # verifies provenance, not that the binary works. Manual bumps still available.
+  # schedule:
+  #   - cron: "17 6 * * *"
   workflow_dispatch: {}
 
 permissions:

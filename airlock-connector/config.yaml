@@ -1,6 +1,6 @@
 ---
 name: Airlock Connector
-version: "1.0.4"
+version: "1.0.5"
 slug: airlock_connector
 description: >-
   Securely expose Home Assistant and other LAN apps through your Airlock edge

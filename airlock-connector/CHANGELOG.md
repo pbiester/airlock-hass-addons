@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.5
+
+- Revert the connector image to the known-good `sha256:32ae0321…` build:
+  the v1.0.3 auto-bump to `sha256:51671a99…` segfaulted on connect in
+  production.
+- Disable the custom AppArmor profile (renamed to `apparmor.txt.disabled`)
+  until it's validated on a real install, and disable the daily auto-bump
+  cron until the bump workflow smoke-tests the image, not just its signature.
+
 ## 1.0.4
 
 - Add a custom AppArmor profile: confines the connector + frpc to `/data`
