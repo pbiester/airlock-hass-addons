@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.6
+
+- Roll forward to the rebuilt connector `sha256:33ccb7b7…`: built from a
+  pinned Go toolchain with bounded deps (no `-u` churn), CVE-patched
+  (x/crypto, x/net, go-jose) and CI smoke-tested on amd64 + arm64 — the
+  build pipeline that auto-shipped the segfaulting `51671a99` is fixed.
+- AppArmor profile stays disabled (`apparmor.txt.disabled`) — re-introduced
+  separately once validated on a real install.
+
 ## 1.0.5
 
 - Revert the connector image to the known-good `sha256:32ae0321…` build:
