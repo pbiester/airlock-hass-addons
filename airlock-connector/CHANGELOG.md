@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.11
+
+- Drop the custom AppArmor profile (kept as `apparmor.txt.disabled`); the
+  Supervisor's auto-generated default profile applies instead. Enforce mode
+  SIGSEGV-crashed the connector with no logged denial anywhere (a silent `deny`
+  rule or the cx exec-transition into the child profile), and this add-on is
+  already low-privilege (no privileged/host-network/caps/socket), so the default
+  profile is the right trade. Revivable later by catching a fresh denial.
+
 ## 1.0.10
 
 - **Revert AppArmor to complain mode** — enforce (v1.0.9) crashed the connector
