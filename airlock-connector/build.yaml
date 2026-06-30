@@ -1,0 +1,10 @@
+---
+# Community add-on base (Alpine + s6-overlay v3 + bashio). Multi-arch under one tag,
+# so the same ref serves both architectures the connector image supports.
+build_from:
+  aarch64: ghcr.io/hassio-addons/base:stable
+  amd64: ghcr.io/hassio-addons/base:stable
+labels:
+  org.opencontainers.image.title: Airlock Connector
+  org.opencontainers.image.description: Home/LAN end of an Airlock tunnel for Home Assistant
+  org.opencontainers.image.source: https://github.com/pbiester/airlock-hass-addons

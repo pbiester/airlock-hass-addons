@@ -1,0 +1,81 @@
+name: connector-bump
+
+# Keep the add-on pinned to the latest published Airlock connector image and cut a new
+# add-on release when that image changes. Home Assistant rebuilds an add-on only on a
+# version bump, so this is what propagates a new connector to installed add-ons.
+# Self-contained: pushes with the repo's own GITHUB_TOKEN — no cross-repo secret.
+#
+# For instant (rather than daily) propagation, Airlock's build-images workflow could
+# fire a repository_dispatch at this repo after publishing the connector — that needs a
+# PAT with contents:write here. The daily schedule is the tokenless fallback.
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+concurrency:
+  group: connector-bump
+  cancel-in-progress: false
+
+jobs:
+  bump:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Resolve latest connector digest
+        id: resolve
+        run: |
+          set -euo pipefail
+          repo=pbiester/airlock-connector
+          tok=$(curl -fsSL "https://ghcr.io/token?scope=repository:${repo}:pull" | jq -r .token)
+          digest=$(curl -fsSL -o /dev/null -D - \
+            -H "Authorization: Bearer $tok" \
+            -H 'Accept: application/vnd.oci.image.index.v1+json' \
+            -H 'Accept: application/vnd.docker.distribution.manifest.list.v2+json' \
+            "https://ghcr.io/v2/${repo}/manifests/latest" \
+            | awk -F': ' 'tolower($1)=="docker-content-digest"{print $2}' | tr -d '\r')
+          if [ -z "$digest" ]; then echo "::error::could not resolve connector digest"; exit 1; fi
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Repin + release if the digest changed
+        env:
+          NEW: ${{ steps.resolve.outputs.digest }}
+        run: |
+          set -euo pipefail
+          dockerfile=airlock-connector/Dockerfile
+          config=airlock-connector/config.yaml
+          changelog=airlock-connector/CHANGELOG.md
+
+          cur=$(grep -oE 'airlock-connector@sha256:[a-f0-9]+' "$dockerfile" | head -1 | cut -d@ -f2 || true)
+          if [ "$cur" = "$NEW" ]; then
+            echo "Already pinned to ${NEW} — nothing to do."
+            exit 0
+          fi
+
+          # 1) repin the Dockerfile (matches an existing @sha256:... or :tag)
+          sed -i -E "s#(ghcr\.io/pbiester/airlock-connector)(@sha256:[a-f0-9]+|:[A-Za-z0-9._-]+)#\1@${NEW}#" "$dockerfile"
+
+          # 2) bump the semver patch so HA flags an update (same scheme → comparable)
+          curv=$(sed -nE 's/^version:[[:space:]]*"?([^"]+)"?/\1/p' "$config")
+          IFS=. read -r MA MI PA <<< "$curv"
+          ver="${MA}.${MI}.$((PA + 1))"
+          sed -i -E "s/^version:.*/version: \"${ver}\"/" "$config"
+
+          # 3) prepend a changelog entry
+          tmp=$(mktemp)
+          {
+            printf '# Changelog\n\n## %s\n\n- Update connector image to `%s`.\n' "$ver" "$NEW"
+            tail -n +2 "$changelog"
+          } > "$tmp"
+          mv "$tmp" "$changelog"
+
+          git config user.name "airlock-bot"
+          git config user.email "contact@isonet.fr"
+          git add "$dockerfile" "$config" "$changelog"
+          git commit -m "addon: bump connector image to ${NEW} (v${ver})"
+          git push
+          echo "Released v${ver} pinned to ${NEW}"

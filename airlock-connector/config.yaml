@@ -1,0 +1,28 @@
+---
+name: Airlock Connector
+version: "1.0.2"
+slug: airlock_connector
+description: >-
+  Securely expose Home Assistant and other LAN apps through your Airlock edge
+  (Google SSO + mTLS, no inbound ports).
+url: https://github.com/pbiester/airlock-hass-addons/tree/main/airlock-connector
+# The connector image is published for amd64 + arm64 only.
+arch:
+  - aarch64
+  - amd64
+# The base image ships s6-overlay v3 as PID 1; don't let the Supervisor inject its own.
+init: false
+# No host networking: on the Supervisor's internal network the connector reaches Home
+# Assistant at `homeassistant:8123`, other add-ons by their hostname, and LAN devices /
+# the Airlock edge by IP (egress is NAT'd) — so it stays isolated and avoids port
+# conflicts. Route targets are set in the Airlock dashboard.
+options:
+  server: ""
+  enroll_token: ""
+  poll_seconds: 30
+  renew_before_days: 21
+schema:
+  server: str
+  enroll_token: str?
+  poll_seconds: int(5,3600)
+  renew_before_days: int(1,180)
