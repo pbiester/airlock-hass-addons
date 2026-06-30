@@ -72,16 +72,24 @@ jobs:
           REF: ghcr.io/pbiester/airlock-connector@${{ steps.resolve.outputs.digest }}
         run: |
           set -euo pipefail
+          repo="${REF%@*}"
+          # Address each arch's single-platform child digest: running a multi-arch index
+          # by digest with --platform hits the containerd "cannot overwrite digest" error.
+          raw="$(docker buildx imagetools inspect "$REF" --raw)"
           is_crash() { case "$1" in 132|133|134|135|136|137|139) return 0 ;; *) return 1 ;; esac; }
-          for plat in linux/amd64 linux/arm64; do
+          for arch in amd64 arm64; do
+            d="$(printf '%s' "$raw" | jq -r --arg a "$arch" \
+              '.manifests[] | select(.platform.architecture==$a and .platform.os=="linux") | .digest' | head -1)"
+            [ -n "$d" ] || { echo "::error::no linux/${arch} manifest"; exit 1; }
+            cref="${repo}@${d}"
             # frpc is the binary that segfaulted in prod; --version must exit 0 (set -e
             # fails the bump on a segfault/panic, so a bad image is never released).
-            docker run --rm --platform "$plat" --entrypoint /usr/local/bin/frpc "$REF" --version
+            docker run --rm --platform "linux/$arch" --entrypoint /usr/local/bin/frpc "$cref" --version
             # The connector itself must start without a signal-crash (no config => it
             # errors/waits, both fine).
-            rc=0; timeout 8 docker run --rm --platform "$plat" "$REF" >/dev/null 2>&1 || rc=$?
-            if is_crash "$rc"; then echo "::error::connector crashed on ${plat} (exit ${rc})"; exit 1; fi
-            echo "${plat}: ok (exit ${rc})"
+            rc=0; timeout 8 docker run --rm --platform "linux/$arch" "$cref" >/dev/null 2>&1 || rc=$?
+            if is_crash "$rc"; then echo "::error::connector crashed on linux/${arch} (exit ${rc})"; exit 1; fi
+            echo "linux/${arch}: ok (exit ${rc})"
           done
 
       - name: Repin + release if the digest changed
