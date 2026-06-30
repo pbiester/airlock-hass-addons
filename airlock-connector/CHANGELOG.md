@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.0.8
+
+- Roll to connector `sha256:2b4a5f49…`, which stamps its build (git sha) into
+  the binary and reports it to the control plane. The Airlock admin dashboard
+  now shows each tunnel's running version next to its status, with an
+  up-to-date / out-of-date badge.
+
 ## 1.0.7
 
 - Re-introduce the custom AppArmor profile in **complain mode**: it loads and
