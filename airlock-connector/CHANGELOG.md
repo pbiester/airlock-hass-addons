@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.3
+
+- Update connector image to `sha256:51671a99f4320e557848f60dd12b509dc169682847cc4b5105c8d8d51e895c01`.
+
 ## 1.0.2
 
 - Pin the connector image by digest (reproducible builds).
