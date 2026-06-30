@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.4
+
+- Add a custom AppArmor profile: confines the connector + frpc to `/data`
+  and outbound TLS, denying mount/ptrace/raw capabilities.
+- Mask the one-time enroll token in the add-on UI (schema `password`).
+- connector-bump: cosign-verify the connector signature before repinning,
+  so a repointed `:latest` can't be auto-released.
+
 ## 1.0.3
 
 - Update connector image to `sha256:51671a99f4320e557848f60dd12b509dc169682847cc4b5105c8d8d51e895c01`.

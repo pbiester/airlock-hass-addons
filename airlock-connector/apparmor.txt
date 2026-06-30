@@ -1,0 +1,77 @@
+#include <tunables/global>
+
+# Custom AppArmor profile for the Airlock Connector add-on. Tighter than the
+# Supervisor's auto-generated default: it confines the connector + frpc binaries
+# into a child profile that may touch only /data and the network, and denies
+# mount, ptrace, raw capabilities and access to host paths. The profile name MUST
+# equal the add-on slug (airlock_connector) so the Supervisor loads it.
+profile airlock_connector flags=(attach_disconnected,mediate_deleted) {
+  #include <abstractions/base>
+
+  # No raw capabilities are needed; deny them explicitly (defense in depth).
+  deny capability,
+  deny mount,
+  deny umount,
+  deny ptrace,
+
+  file,
+  signal (send) set=(kill,term,int,hup,cont),
+
+  # S6-Overlay (PID 1 from the base image; init: false in config.yaml).
+  /init ix,
+  /bin/** ix,
+  /usr/bin/** ix,
+  /run/{s6,s6-rc*,service}/** ix,
+  /package/** ix,
+  /command/** ix,
+  /etc/s6-overlay/** rix,
+  /etc/services.d/** rwix,
+  /etc/cont-init.d/** rwix,
+  /etc/cont-finish.d/** rwix,
+  /run/{,**} rwk,
+  /dev/tty rw,
+
+  # Bashio (run.sh is `#!/usr/bin/with-contenv bashio`).
+  /usr/lib/bashio/** ix,
+  /tmp/** rwk,
+
+  # The add-on options and any other add-on files.
+  /data/** rw,
+  /run.sh r,
+
+  # Hand the long-running binaries their own confined profile.
+  /usr/local/bin/airlock-connector cx -> airlock-connector,
+  /usr/local/bin/frpc cx -> airlock-connector,
+
+  profile airlock-connector flags=(attach_disconnected,mediate_deleted) {
+    #include <abstractions/base>
+    #include <abstractions/nameservice>
+    #include <abstractions/ssl_certs>
+
+    # Receive shutdown signals from S6-Overlay.
+    signal (receive) peer=*_airlock_connector,
+
+    deny capability,
+    deny mount,
+    deny ptrace,
+
+    # Outbound TLS to the Airlock edge; no listening sockets are opened.
+    network inet stream,
+    network inet6 stream,
+
+    # Persistent state: key, cert, CA and the rendered frpc.toml all live here.
+    /data/** rwk,
+
+    # The two static binaries; the connector execs frpc as a child in this profile.
+    /usr/local/bin/airlock-connector r,
+    /usr/local/bin/frpc rix,
+
+    # Read-only system bits needed at runtime.
+    /etc/passwd r,
+    /etc/group r,
+    /etc/nsswitch.conf r,
+    /etc/resolv.conf r,
+    /etc/ssl/** r,
+    /tmp/** rwk,
+  }
+}

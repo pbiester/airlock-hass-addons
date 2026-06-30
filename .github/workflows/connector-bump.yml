@@ -41,6 +41,25 @@ jobs:
           if [ -z "$digest" ]; then echo "::error::could not resolve connector digest"; exit 1; fi
           echo "digest=$digest" >> "$GITHUB_OUTPUT"
 
+      - name: Verify connector signature (cosign keyless)
+        env:
+          DIGEST: ${{ steps.resolve.outputs.digest }}
+        run: |
+          set -euo pipefail
+          # The connector is cosign keyless-signed by the airlock repo's
+          # build-images workflow. Verify the resolved digest BEFORE trusting it:
+          # if :latest were ever repointed to an unsigned or foreign image, fail
+          # the bump instead of auto-pinning + releasing a bad digest to every
+          # installed add-on. Pins the signing workflow identity + OIDC issuer.
+          curl -fsSL -o /usr/local/bin/cosign \
+            https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign-linux-amd64
+          chmod +x /usr/local/bin/cosign
+          cosign verify \
+            --certificate-identity-regexp '^https://github\.com/pbiester/airlock/\.github/workflows/build-images\.yml@refs/.+$' \
+            --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \
+            "ghcr.io/pbiester/airlock-connector@${DIGEST}" > /dev/null
+          echo "Signature verified for ${DIGEST}"
+
       - name: Repin + release if the digest changed
         env:
           NEW: ${{ steps.resolve.outputs.digest }}

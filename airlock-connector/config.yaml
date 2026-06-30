@@ -1,6 +1,6 @@
 ---
 name: Airlock Connector
-version: "1.0.3"
+version: "1.0.4"
 slug: airlock_connector
 description: >-
   Securely expose Home Assistant and other LAN apps through your Airlock edge
@@ -23,6 +23,6 @@ options:
   renew_before_days: 21
 schema:
   server: str
-  enroll_token: str?
+  enroll_token: password?
   poll_seconds: int(5,3600)
   renew_before_days: int(1,180)
