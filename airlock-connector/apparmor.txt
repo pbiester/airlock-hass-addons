@@ -6,12 +6,12 @@
 # mount, ptrace, raw capabilities and access to host paths. The profile name MUST
 # equal the add-on slug (airlock_connector) so the Supervisor loads it.
 #
-# Shipped in COMPLAIN mode (flags=(...,complain)): the profile loads and LOGS what
-# it would block (dmesg / `journalctl -k | grep apparmor`, audit type=AVC, the
-# add-on keeps running) but enforces nothing — so it cannot break the add-on. Run
-# normally for a while, confirm no operation you rely on is logged as denied, then
-# drop `complain` from BOTH profiles below to switch to enforce.
-profile airlock_connector flags=(attach_disconnected,mediate_deleted,complain) {
+# ENFORCE mode. If the add-on fails to start after an update, AppArmor is likely
+# blocking a path this profile didn't anticipate: check `journalctl -k | grep
+# apparmor` for the denied operation and add an allow rule — or temporarily add
+# `complain` back to BOTH profile flags below (loads but enforces nothing) while
+# iterating, then remove it again.
+profile airlock_connector flags=(attach_disconnected,mediate_deleted) {
   #include <abstractions/base>
 
   # No raw capabilities are needed; deny them explicitly (defense in depth).
@@ -49,7 +49,7 @@ profile airlock_connector flags=(attach_disconnected,mediate_deleted,complain) {
   /usr/local/bin/airlock-connector cx -> airlock-connector,
   /usr/local/bin/frpc cx -> airlock-connector,
 
-  profile airlock-connector flags=(attach_disconnected,mediate_deleted,complain) {
+  profile airlock-connector flags=(attach_disconnected,mediate_deleted) {
     #include <abstractions/base>
     #include <abstractions/nameservice>
     #include <abstractions/ssl_certs>

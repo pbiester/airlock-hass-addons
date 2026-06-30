@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.9
+
+- Switch the AppArmor profile from complain to **enforce**: it now actively
+  confines the connector + frpc (deny mount/ptrace/raw caps; writes limited to
+  `/data`). If the add-on won't start, check `journalctl -k | grep apparmor` for
+  the denied path and add a rule — or re-add `complain` to both profiles while
+  iterating.
+
 ## 1.0.8
 
 - Roll to connector `sha256:2b4a5f49…`, which stamps its build (git sha) into
