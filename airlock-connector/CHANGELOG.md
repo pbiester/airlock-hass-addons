@@ -1,5 +1,14 @@
 # Changelog
 
+## 1.0.7
+
+- Re-introduce the custom AppArmor profile in **complain mode**: it loads and
+  logs what it would block but enforces nothing, so it can't break the add-on.
+  Watch `journalctl -k | grep apparmor` (audit `ALLOWED`/`AVC`) during normal
+  use; once nothing you rely on is flagged, drop `complain` from both profiles
+  in `apparmor.txt` to enforce. (The earlier crash was the connector binary, not
+  this profile — confirmed by the CI smoke test.)
+
 ## 1.0.6
 
 - Roll forward to the rebuilt connector `sha256:33ccb7b7…`: built from a
