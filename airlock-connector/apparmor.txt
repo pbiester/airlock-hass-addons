@@ -6,14 +6,14 @@
 # mount, ptrace, raw capabilities and access to host paths. The profile name MUST
 # equal the add-on slug (airlock_connector) so the Supervisor loads it.
 #
-# ENFORCE mode. If the add-on fails to start after an update, AppArmor is likely
-# blocking a path this profile didn't anticipate. On Home Assistant OS, read the
-# HOST log for the denial — Settings -> System -> Logs -> Source: Host (or
-# `ha host logs`) — looking for apparmor="DENIED" profile="airlock_connector" and
-# the blocked operation/name. Add an allow rule for it, or temporarily add
-# `complain` back to BOTH profile flags below (loads but enforces nothing) while
-# iterating, then remove it again.
-profile airlock_connector flags=(attach_disconnected,mediate_deleted) {
+# COMPLAIN mode (reverted from enforce — enforce SIGSEGV-crashed the connector,
+# exit 139: the profile blocks something the binary needs at startup). Complain
+# loads + LOGS would-be denials but enforces nothing, so the add-on runs normally.
+# To fix properly: collect the denials from the HOST log (Settings -> System ->
+# Logs -> Source: Host, or `ha host logs`) — every apparmor entry with
+# profile="airlock_connector" — add an allow rule for each, THEN drop `complain`
+# from BOTH profile flags below to switch back to enforce.
+profile airlock_connector flags=(attach_disconnected,mediate_deleted,complain) {
   #include <abstractions/base>
 
   # No raw capabilities are needed; deny them explicitly (defense in depth).
@@ -51,7 +51,7 @@ profile airlock_connector flags=(attach_disconnected,mediate_deleted) {
   /usr/local/bin/airlock-connector cx -> airlock-connector,
   /usr/local/bin/frpc cx -> airlock-connector,
 
-  profile airlock-connector flags=(attach_disconnected,mediate_deleted) {
+  profile airlock-connector flags=(attach_disconnected,mediate_deleted,complain) {
     #include <abstractions/base>
     #include <abstractions/nameservice>
     #include <abstractions/ssl_certs>

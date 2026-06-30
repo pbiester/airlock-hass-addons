@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.0.10
+
+- **Revert AppArmor to complain mode** — enforce (v1.0.9) crashed the connector
+  with SIGSEGV (exit 139); the profile blocks something it needs at startup.
+  Complain restores a working tunnel (same connector image, proven in v1.0.8)
+  while the denials are collected from the Host log to fix the rules before
+  re-enforcing.
+
 ## 1.0.9
 
 - Switch the AppArmor profile from complain to **enforce**: it now actively
