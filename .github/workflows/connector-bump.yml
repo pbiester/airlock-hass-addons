@@ -29,8 +29,9 @@ jobs:
   bump:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: docker/setup-qemu-action@v3   # run the arm64 image variant under emulation
+      # Third-party actions pinned to commit SHAs (this job holds contents:write).
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: docker/setup-qemu-action@c7c53464625b32c7a7e944ae62b3e17d2b600130 # v3  # run the arm64 image variant under emulation
 
       - name: Resolve latest connector digest
         id: resolve
@@ -57,9 +58,12 @@ jobs:
           # if :latest were ever repointed to an unsigned or foreign image, fail
           # the bump instead of auto-pinning + releasing a bad digest to every
           # installed add-on. Pins the signing workflow identity + OIDC issuer.
-          curl -fsSL -o /usr/local/bin/cosign \
+          curl -fsSL -o /tmp/cosign \
             https://github.com/sigstore/cosign/releases/download/v2.4.1/cosign-linux-amd64
-          chmod +x /usr/local/bin/cosign
+          # Verify cosign's own published SHA256 before using it to verify the
+          # connector signature — otherwise a tampered cosign could make `verify` a no-op.
+          echo "8b24b946dd5809c6bd93de08033bcf6bc0ed7d336b7785787c080f574b89249b  /tmp/cosign" | sha256sum -c -
+          install -m 0755 /tmp/cosign /usr/local/bin/cosign
           cosign verify \
             --certificate-identity-regexp '^https://github\.com/pbiester/airlock/\.github/workflows/build-images\.yml@refs/.+$' \
             --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \

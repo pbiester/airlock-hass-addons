@@ -1,9 +1,12 @@
 ---
-# Community add-on base (Alpine + s6-overlay v3 + bashio). Multi-arch under one tag,
-# so the same ref serves both architectures the connector image supports.
+# Community add-on base (Alpine + s6-overlay v3 + bashio). Multi-arch index pinned
+# by DIGEST (not the mutable :stable tag) so a tag repoint can't swap the runtime
+# that becomes PID 1 on the home network under the connector without review. The
+# same index digest serves both architectures. To bump: resolve the new
+# ghcr.io/hassio-addons/base:stable digest and update both refs deliberately.
 build_from:
-  aarch64: ghcr.io/hassio-addons/base:stable
-  amd64: ghcr.io/hassio-addons/base:stable
+  aarch64: ghcr.io/hassio-addons/base@sha256:26c14772d1eb72c8aa7f0b6866a2bc13ada705f77b8c263fcfa09116a5e00e25
+  amd64: ghcr.io/hassio-addons/base@sha256:26c14772d1eb72c8aa7f0b6866a2bc13ada705f77b8c263fcfa09116a5e00e25
 labels:
   org.opencontainers.image.title: Airlock Connector
   org.opencontainers.image.description: Home/LAN end of an Airlock tunnel for Home Assistant
