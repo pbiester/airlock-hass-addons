@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.12
+
+- Update connector image to `sha256:247a6dfd857b83236face283d28835465b18104b85a3b7fb97581f4bf5efd983`.
+
 ## 1.0.11
 
 - Drop the custom AppArmor profile (kept as `apparmor.txt.disabled`); the
