@@ -4,7 +4,7 @@ ARG BUILD_FROM
 # (multi-arch amd64+arm64, cosign-signed + Trivy-scanned by Airlock CI). A native
 # per-arch build pulls the matching platform automatically. Pinned by digest for
 # reproducible builds; the connector-bump workflow repins + releases on updates.
-FROM ghcr.io/pbiester/airlock-connector@sha256:6dab808fcec193a2f8e5c3d253ac1b155bde8ca00dc4372041fc9399eba57ac2 AS connector
+FROM ghcr.io/pbiester/airlock-connector@sha256:71b0ce459d97a416feda35a59502f8f45f542e47ec4c52b309ad7c0eb9e8fe3d AS connector
 
 FROM ${BUILD_FROM}
 
