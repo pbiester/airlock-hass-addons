@@ -1,0 +1,10 @@
+# Keeps the SHA-pinned actions current via their version comments (security audit
+# 2026-09-30-2, F14). The cooldown lets a hijacked release be withdrawn before it lands.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    cooldown:
+      default-days: 7
