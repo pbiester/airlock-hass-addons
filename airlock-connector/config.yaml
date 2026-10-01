@@ -21,8 +21,12 @@ options:
   enroll_token: ""
   poll_seconds: 30
   renew_before_days: 21
+  # The targets this connector may forward to (comma-separated host:port). A route the
+  # control plane points anywhere else is not published (security audit 2026-10-01, A08).
+  allowed_targets: "homeassistant:8123"
 schema:
   server: str
   enroll_token: password?
   poll_seconds: int(5,3600)
   renew_before_days: int(1,180)
+  allowed_targets: str?

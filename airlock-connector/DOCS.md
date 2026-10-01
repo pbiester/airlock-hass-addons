@@ -32,6 +32,7 @@ persistent `/data`, so the token is used exactly once.
 | `enroll_token` | first run | — | One-time enrollment token from the dashboard. Only needed until a certificate exists in `/data`; you can clear it afterwards. |
 | `poll_seconds` | no | `30` | Seconds between control-plane config polls. |
 | `renew_before_days` | no | `21` | Renew the client certificate this many days before expiry. |
+| `allowed_targets` | no | `homeassistant:8123` | Comma-separated `host:port` targets this connector may forward to. A route to any other target is not published and shows as "not allowed" in the dashboard, so whoever controls the control plane cannot reach the rest of your network through this add-on. Add a target here when you add a route for it; empty allows every target. |
 
 ### Adding a connector / getting the token
 
@@ -50,9 +51,9 @@ name or IP — set each route's target in the **Airlock dashboard**:
 - **A LAN device** → its IP/hostname and port (e.g. `192.168.1.50:80`); egress to the
   LAN and to the Airlock edge is NAT'd, so no host networking is required.
 
-A route's target only needs to be reachable *from the add-on container*. Routes,
-hostnames and auth modes (public / SSO / mTLS) are all declared in the Airlock
-dashboard — there is nothing to configure here beyond enrollment.
+A route's target only needs to be reachable *from the add-on container*, and it must be
+listed in `allowed_targets` (default: Home Assistant itself). Routes, hostnames and auth
+modes (public / SSO / mTLS) are declared in the Airlock dashboard.
 
 ## Re-enrolling
 

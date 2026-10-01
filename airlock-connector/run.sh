@@ -15,6 +15,11 @@ export AIRLOCK_DATA="/data"
 export AIRLOCK_POLL="$(bashio::config 'poll_seconds')"
 export AIRLOCK_RENEW_BEFORE_DAYS="$(bashio::config 'renew_before_days')"
 
+# Pin the targets this connector may forward to; empty = any target the control plane
+# names (security audit 2026-10-01, A08).
+if bashio::config.has_value 'allowed_targets'; then
+    export AIRLOCK_ALLOWED_TARGETS="$(bashio::config 'allowed_targets')"
+fi
 if bashio::config.has_value 'enroll_token'; then
     export AIRLOCK_ENROLL_TOKEN="$(bashio::config 'enroll_token')"
 fi
