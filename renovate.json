@@ -1,0 +1,52 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "description": [
+    "Renovate for airlock-hass-addons (replaces Dependabot), run by the homelab cluster's CronJob.",
+    "It keeps the workflows' actions and the add-on's base image current; the connector image is",
+    "the connector-bump workflow's (cosign and smoke-tested), never Renovate's. A release waits 7 days",
+    "before it is proposed (audit 2026-09-30-2, F14)."
+  ],
+  "extends": ["config:recommended", ":semanticCommitsDisabled", "helpers:pinGitHubActionDigests"],
+  "timezone": "Europe/Berlin",
+  "schedule": ["* 0-6 * * 1"],
+  "minimumReleaseAge": "7 days",
+  "internalChecksFilter": "strict",
+  "prHourlyLimit": 0,
+  "osvVulnerabilityAlerts": true,
+  "vulnerabilityAlerts": {
+    "schedule": ["at any time"],
+    "minimumReleaseAge": "2 days",
+    "labels": ["dependencies", "security"]
+  },
+  "labels": ["dependencies"],
+  "customManagers": [
+    {
+      "customType": "regex",
+      "description": "The community add-on base, pinned by the digest of its :stable index (one digest serves both architectures).",
+      "managerFilePatterns": ["/^[^/]+/build\\.yaml$/"],
+      "matchStrings": ["(?<depName>ghcr\\.io/hassio-addons/base)@(?<currentDigest>sha256:[0-9a-f]{64})"],
+      "currentValueTemplate": "stable",
+      "datasourceTemplate": "docker"
+    }
+  ],
+  "packageRules": [
+    {
+      "description": "The connector image: the connector-bump workflow repins it and cuts the release.",
+      "matchPackageNames": ["ghcr.io/pbiester/**"],
+      "enabled": false
+    },
+    {
+      "description": "The base: both architectures in one PR; Home Assistant rebuilds an add-on only on a version bump.",
+      "matchPackageNames": ["ghcr.io/hassio-addons/base"],
+      "groupName": "add-on base image",
+      "commitMessagePrefix": "addon:",
+      "prBodyNotes": ["Home Assistant rebuilds the add-on only on a new version: bump `version` in airlock-connector/config.yaml and add a CHANGELOG entry in this PR before merging."]
+    },
+    {
+      "description": "The workflows' actions in one PR.",
+      "matchManagers": ["github-actions"],
+      "groupName": "GitHub Actions",
+      "commitMessagePrefix": "ci:"
+    }
+  ]
+}
