@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.0.28
+
+- Update connector image to `sha256:248fa86cf826e1a7a30a35a4b1e9d08ae243940e2a3fc98fba6fa5ffdaeb0f69`.
+
 ## 1.0.27
 
 - Update connector image to `sha256:a77d8d0b855dd3d3e212509188c2176b9843a8908f75ac51541b8c6277934da2`.
